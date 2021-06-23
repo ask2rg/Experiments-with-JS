@@ -4,6 +4,7 @@
 
 const novoresumeDownloader = (moveLeft = 200) => {
     document.body.style.visibility = 'hidden';
-    document.getElementById("#q1sy_q-doc-edit").css(`position: fixed; top: 0; margin-left: -${moveLeft }px; visibility: visible;`);
+    document.getElementById("q1sy_q-doc-edit").style.cssText = `position: fixed; top: 0; margin-left: -${moveLeft }px; visibility: visible;`;
     window.print();
 }
+novoresumeDownloader();
