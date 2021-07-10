@@ -1,0 +1,207 @@
+// https://script.google.com/macros/s/AKfycbw45n6Xo7nN2hWY3SaVEmS5XvXQzPk9vhaIZhF6deOjTC-ZxAo/exec?ytid=NrdZBDh2r9o&type=YT   // 
+
+// el perametr > uses el=embedded for the first query. If it fails because the video cannot be embedded, it then retries with el=detailpage.
+
+// there are 3 version of api (YT, UC, UC1), currently use UC1 
+
+var el;
+
+function doGet(e) {
+  var video_id = e.parameter.ytid; //youtube video id
+  var type = e.parameter.type;  // YT or UC
+  el = e.parameter.el;
+
+  if (type == 'YT') {
+    var content = getFullJSON(video_id);
+    return ContentService.createTextOutput(JSON.stringify(content)).setMimeType(ContentService.MimeType.JSON);
+
+  } else if (type == 'UC1') {
+    var content = getShortJSONUC1A(video_id);
+    return ContentService.createTextOutput(JSON.stringify(content)).setMimeType(ContentService.MimeType.JSON);
+
+  } else if (type == 'UC') {
+    var content = getShortJSON(video_id);
+    return ContentService.createTextOutput(JSON.stringify(content)).setMimeType(ContentService.MimeType.JSON);
+  }
+
+
+}
+
+
+function getShortJSON(video_id) {
+  var groupLinks = getYoutubeLinks(video_id);
+
+  var json = {
+    'video_id': video_id,
+    'yt_links': groupLinks
+  };
+
+  return json;
+}
+
+
+
+function getFullJSON(youtube_video_id) {
+
+  try {
+
+    var url = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id;
+
+    var response = UrlFetchApp.fetch(url).getContentText();
+
+    var decResponse = decodeURIComponent(response);
+    var rawdata = decResponse.replace(/\\u0026/g, "&");
+
+
+    var fPos = rawdata.indexOf('{');
+    var lPos = rawdata.lastIndexOf('}') + 1;
+    var ObjStr = rawdata.substr(fPos, (lPos - fPos));
+
+    var json = { 'action': 'success', 'data': JSON.parse(ObjStr) }
+
+    var status = JSON.parse(ObjStr).playabilityStatus.status
+
+
+  } catch (err) {
+    var json = { 'action': 'error', 'data': err };
+  }
+
+  return json;
+}
+
+
+
+
+
+
+function getYoutubeLinks(youtube_video_id) {
+  try {
+    var url = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id;
+    var response = UrlFetchApp.fetch(url).getContentText();
+
+    var decResponse = decodeURIComponent(response);
+    var rawdata = decResponse.replace(/\\u0026/g, "&");
+
+    // get all links
+    var rawBlock = rawdata.match(/(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])?/g);
+    var rawBlockExpand = rawdata.match(/(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])?.{350}/g);
+    var selectBlock = [];
+
+
+    // get all Download links
+    for (var i = 0; i < rawBlock.length; i++) {
+      var n = rawBlock[i].search(".googlevideo.com");
+      var p = rawBlock[i].search("itag=");
+
+      if (n > 0 && p > 0) {
+
+        var idata = getMoreData(rawBlockExpand[i]);
+
+        var LinkObj = {
+          'url': rawBlock[i],
+          'info': idata
+        };
+        selectBlock.push(LinkObj);
+
+      }
+    }
+
+    return selectBlock;
+
+
+  } catch (err) {
+    return err;
+  }
+}
+
+
+
+
+function getMoreData(rawBlockExpand) {
+
+  var infoData = {};
+
+  var clipStr = rawBlockExpand.substr((rawBlockExpand.length - 350), rawBlockExpand.length).split('{')[0].split('}')[0];
+  var decClipStr = decodeURIComponent(clipStr).replace(/\\u0026/g, "&");
+  var rawInfoBlock = decClipStr.split(',');
+
+  for (var i = 1; i < rawInfoBlock.length; i++) {
+    var rawInfo = rawInfoBlock[i];
+    var cols = rawInfo.replace(/\"/g, '').split(':');
+
+    var colA = cols[0];
+    var colB = cols[1];
+
+    if (colB !== undefined) {
+      infoData[colA] = colB;
+    }
+  }
+
+  return infoData;
+
+}
+
+
+
+
+
+function test() {
+  var youtube_video_id = "MLgqh37aTbY"
+  var url = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id;
+  var url1 = "https://www.youtube.com/get_video_info?html5=1&video_id=" + youtube_video_id;
+  try {
+    var response = UrlFetchApp.fetch(url).getContentText();
+  } catch (e) {
+    var response = UrlFetchApp.fetch(url1).getContentText();
+  }
+
+  try {
+
+    var decResponse = decodeURIComponent(response);
+    var rawdata = decResponse.replace(/\\u0026/g, "&");
+
+    var playabilityStatus = rawdata.split('"playabilityStatus":')[1].split('status":')[1].split('",')[0].replace('"', '');
+
+    if (playabilityStatus == "OK") {
+      var videoDetails = GetJSONvideoDetailsYT1(rawdata);
+      var videoStreamingData = GetJSONstreamingDataYT1(rawdata);
+      var json = {
+        "action": "success",
+        "type": "not-embeddable",
+        "data": {
+          "videoDetails": videoDetails,
+          "streamingData": videoStreamingData
+        }
+      };
+
+    } else {
+      var json = getShortJSONUC1B(youtube_video_id);
+    }
+
+  } catch (err) {
+    var json = { 'action': 'error', 'data': err };
+  }
+
+  return json;
+}
+
+
+
+//"mimeType":"video/mp4; codecs=\"avc1.64001F, mp4a.40.2\"",
+
+//"bitrate":2254463,
+//"width":1280,
+//"height":720,
+//"lastModified":"1595144418011999",
+//"quality":"hd720",
+//"fps":30,
+//"qualityLabel":"720p",
+//"projectionType":"RECTANGULAR",
+//"audioQuality":"AUDIO_QUALITY_MEDIUM",
+//"approxDurationMs":"599260",
+//"audioSampleRate":"44100",
+//"audioChannels":2
+
+// https://upvideo.herokuapp.com/# https://bitdownloader.com/en2
+
+// #* https://tyrrrz.me/blog/reverse-engineering-youtube

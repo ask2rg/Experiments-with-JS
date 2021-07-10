@@ -1,0 +1,173 @@
+/*
+
+Embeddable : kSFJGEHDCrQ > https://script.google.com/macros/s/AKfycbw45n6Xo7nN2hWY3SaVEmS5XvXQzPk9vhaIZhF6deOjTC-ZxAo/exec?ytid=kSFJGEHDCrQ&type=UC1
+Not-Embeddable : pnHig9YsDF4 > https://script.google.com/macros/s/AKfycbw45n6Xo7nN2hWY3SaVEmS5XvXQzPk9vhaIZhF6deOjTC-ZxAo/exec?ytid=pnHig9YsDF4&type=UC1
+
+Age Restricted Videos :  MLgqh37aTbY > https://script.google.com/macros/s/AKfycbw45n6Xo7nN2hWY3SaVEmS5XvXQzPk9vhaIZhF6deOjTC-ZxAo/exec?ytid=MLgqh37aTbY&type=UC1
+
+videoDetails.title
+videoDetails.videoId
+videoDetails.lengthSeconds
+videoDetails.thumbnail.thumbnails
+streamingData.formats
+streamingData.adaptiveFormats
+
+
+?el=embedded > fails when the video cannot be embedded,
+?el=detailpage > works with videos that aren’t embeddable, (but doesn’t work with age-restricted videos)
+
+// July upadte youtube prob. solve : https://stackoverflow.com/questions/67615278/get-video-info-youtube-endpoint-suddenly-returning-404-not-found
+
+may 2021 fix : https://www.youtube.com/get_video_info?html5=1&video_id={videoId}
+
+July 2021 fix : https://www.youtube.com/get_video_info?video_id={videoId}&eurl=https%3A%2F%2Fyoutube.googleapis.com%2Fv%2Fonz2k4zoLjQ&html5=1&c=TVHTML5&cver=6.20180913
+
+*/
+
+function testYT1() {
+  getShortJSONUC1A('zR52MgYhm_Q');
+}
+
+
+function getShortJSONUC1A(youtube_video_id) {
+  var url = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id;
+  // may update : var url1 = "https://www.youtube.com/get_video_info?html5=1&video_id=" + youtube_video_id;
+  var url1 = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id + "&eurl=https%3A%2F%2Fyoutube.googleapis.com%2Fv%2Fonz2k4zoLjQ&html5=1&c=TVHTML5&cver=6.20180913";
+  try {
+    var response = UrlFetchApp.fetch(url).getContentText();
+  } catch (e) {
+    try {
+      var response = UrlFetchApp.fetch(url1).getContentText();
+    } catch (er) {
+      return { 'action': 'error', 'data': er };
+    }
+  }
+
+  try {
+
+    var decResponse = decodeURIComponent(response);
+    var rawdata = decResponse.replace(/\\u0026/g, "&");
+
+    var playabilityStatus = rawdata.split('"playabilityStatus":')[1].split('status":')[1].split('",')[0].replace('"', '');
+
+    if (playabilityStatus == "OK") {
+      var videoDetails = GetJSONvideoDetailsYT1(rawdata);
+      var videoStreamingData = GetJSONstreamingDataYT1(rawdata);
+      var json = {
+        "action": "success",
+        "type": "not-embeddable",
+        "data": {
+          "videoDetails": videoDetails,
+          "streamingData": videoStreamingData
+        }
+      };
+
+    } else {
+      var json = getShortJSONUC1B(youtube_video_id);
+    }
+
+  } catch (err) {
+    var json = { 'action': 'error', 'data': err };
+  }
+
+  return json;
+}
+
+
+
+
+
+
+
+function getShortJSONUC1B(youtube_video_id) {
+  var url = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id + '&el=detailpage';
+
+  // may 2021 fix: var url1 = "https://www.youtube.com/get_video_info?html5=1&video_id=" + youtube_video_id + '&el=detailpage';
+
+  var url1 = "https://www.youtube.com/get_video_info?video_id=" + youtube_video_id + "&el=detailpage&eurl=https%3A%2F%2Fyoutube.googleapis.com%2Fv%2Fonz2k4zoLjQ&html5=1&c=TVHTML5&cver=6.20180913";
+
+  try {
+    var response = UrlFetchApp.fetch(url).getContentText();
+  } catch (e) {
+    var response = UrlFetchApp.fetch(url1).getContentText();
+  }
+
+  try {
+
+    var decResponse = decodeURIComponent(response);
+    var rawdata = decResponse.replace(/\\u0026/g, "&");
+
+    var videoDetails = GetJSONvideoDetailsYT1(rawdata);
+    var videoStreamingData = GetJSONstreamingDataYT1(rawdata);
+
+
+    var json = {
+      "action": "success",
+      "type": "not-age-restricted",
+      "data": {
+        "videoDetails": videoDetails,
+        "streamingData": videoStreamingData
+      }
+
+    };
+
+
+  } catch (err) {
+    var json = { 'action': 'error', 'data': err };
+  }
+
+  return json;
+}
+
+
+
+
+
+
+
+
+function GetJSONvideoDetailsYT1(rawdata) {
+
+  var rootBlock = rawdata.split('"videoDetails":')[1];
+  var videoId = rootBlock.split('videoId":')[1].split('",')[0].replace('"', '');
+  //var videotitle = "";
+  videotitle = rootBlock.split('title":')[1].split('",')[0].replace(/"/g, '');
+
+  var videoLengthSeconds = rootBlock.split('lengthSeconds":')[1].split(',')[0].replace(/"/g, '');
+
+  var thumbnails = rootBlock.split('thumbnails":')[1].split('[')[1].split(']')[0];
+  var thumbnailsStr = '{"thumbnails":[' + thumbnails + ']}';
+  var thumbnailsObj = JSON.parse(thumbnailsStr);
+
+  var videoDetailsJSON = {
+    "videoId": videoId,
+    "title": videotitle,
+    "lengthSeconds": videoLengthSeconds,
+    "thumbnail": thumbnailsObj
+  };
+
+  return videoDetailsJSON;
+}
+
+
+
+function GetJSONstreamingDataYT1(rawdata) {
+
+  var rootBlock = rawdata.split('"streamingData":')[1];
+
+  var vidFormats = rootBlock.split('formats":')[1].split('[')[1].split(']')[0];
+  var vidAdaptiveFormats = rootBlock.split('adaptiveFormats":')[1].split('[')[1].split(']')[0];
+
+  //var vidFormatsStr = '{"formats":['+ vidFormats +']}';
+  //var vidAdaptiveFormatsStr = '{"adaptiveFormats":['+ vidAdaptiveFormats +']}';  
+
+  // var vidFormatsObj = JSON.parse(vidFormatsStr);
+  // var vidAdaptiveFormatsObj = JSON.parse(vidAdaptiveFormatsStr);
+
+  var streamingDataStr = '{"formats":[' + vidFormats + '], "adaptiveFormats":[' + vidAdaptiveFormats + ']}';
+
+
+  var streamingDataJSON = JSON.parse(streamingDataStr);
+
+  return streamingDataJSON;
+}
