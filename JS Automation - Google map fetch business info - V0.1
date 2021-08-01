@@ -1,0 +1,175 @@
+// open browser Console to see fetch progress
+
+// if process stop fetcching mostly when new page load then click on next resuelt and then 1st
+
+// frize fetching >>> click 2nd >> click 1st
+
+// formate Raw JSON text >> https://webformatter.com/json
+
+
+var waitLoad, waitInfoUpdate, curFetch, countB = 0, countPg = 0;
+var businessInfo = [];
+var srchList;
+var timeWait, curVed;
+
+var fetchSpeed = 1000; // 1000ms or 1 sec.
+
+getListAll();
+
+var startTime;
+
+function getListAll(){
+  startTime = new Date().getTime();
+
+  if(document.querySelectorAll('.rlfl__loading-overlay.rlfl__visible')[0]){
+
+  }else{
+    clearInterval(waitLoad);
+    countPg++;
+
+    srchList = document.querySelectorAll('.VkpGBb > a');
+ 
+    countB = 0;
+    srchList[0].click();    
+    curFetch = 'none';
+    timeWait = setInterval(getInfo, fetchSpeed);
+  }
+
+}
+
+
+
+function getInfo(){
+  clearInterval(timeWait);  
+  var infoBox = document.querySelectorAll('.immersive-container')[0];
+
+  if(!infoBox){
+    srchList[countB].click();
+    timeWait = setInterval(getInfo, fetchSpeed);        
+  }
+  
+  infoBox.addEventListener('DOMSubtreeModified', function () {
+      clearInterval(waitInfoUpdate);    
+      curFetch = infoBox.querySelectorAll('[data-attrid]');
+      waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
+  }, false);  
+  
+}
+
+
+
+function fetchInfo(){
+  clearInterval(waitInfoUpdate); 
+  
+  var resp = {
+    title: 'notSet',
+    address: 'notSet',
+    phone: 'notSet',
+    website: 'notSet',
+    closed: 'no',
+    ved: 'notSet',
+    url:  'notSet',
+  }
+
+  curFetch.forEach(function(atrItem){
+    if(atrItem.dataset.attrid.search('title') > -1 ){
+      resp.title = atrItem.innerText;
+      resp.ved = atrItem.dataset.ved;
+      if(businessInfo.linkList > 0){
+        if(businessInfo[(businessInfo.length - 1)].ved == resp.ved){
+          waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
+          return;
+        }
+      }      
+    } 
+    if(atrItem.dataset.attrid.search('address') > -1 ) resp.address = atrItem.innerText;
+    if(atrItem.dataset.attrid.search('phone') > -1 ) resp.phone = atrItem.innerText;  
+    if(atrItem.dataset.attrid.search('closed') > -1 ) resp.closed = 'yes'; 
+    resp.url = document.querySelectorAll('.uMdZh.tIxNaf.mnr-c.rllt__local-item-selected a')[0].href;
+
+    var actBtn = document.querySelectorAll('.immersive-container .IzNS7c.duf-h .QqG1Sd');
+    actBtn.forEach(function(btn){
+      if(btn.innerText.toLowerCase().search('website') > -1) resp.website = btn.querySelectorAll('a')[0].href;
+    });
+
+  });
+  
+  
+
+  businessInfo.push(resp);
+
+  
+  if((countB + 1) < srchList.length){
+    countB++;
+    console.log('Page: ' + countPg + ' ->> Item: ' + (countB));
+    srchList[countB].click();
+    timeWait = setInterval(getInfo, 100);
+    
+  }else{
+    console.log('Page: ' + countPg + ' ->> Item: ' + (countB + 1));
+    console.log('Page Next');
+    moveToNextPg();
+  }     
+}
+
+
+var nextWait, runWait = false, waitPg; 
+
+function moveToNextPg(){
+  var nextPg = document.querySelectorAll('#pnnext')[0];
+  if(nextPg){  
+    nextPg.click();
+    nextWait = true;  
+    waitPg = setInterval(waitToLoadPage, fetchSpeed);  
+  }else{  
+    console.log('Finished Process. Wait for CSV...');    
+    createCSV2(JSON.stringify(businessInfo));   
+  } 
+}
+
+
+
+function waitToLoadPage(){
+  
+  if(document.querySelectorAll('.rlfl__loading-overlay.rlfl__visible')[0]){
+    if(nextWait) runWait = true;
+    console.log('load next page');
+  }else if(runWait){
+    clearInterval(waitPg); 
+    runWait = false;
+    nextWait = false;
+    console.log('ready next page');
+
+    countPg++;
+    srchList = document.querySelectorAll('.VkpGBb > a');
+    
+
+    countB = 0;
+    srchList[0].click();    
+    curFetch = 'none';
+    timeWait = setInterval(getInfo, fetchSpeed);
+  }else{
+    runWait = true;
+    console.log('#Err next page');
+  }
+}
+
+
+
+
+
+
+function createCSV2(elem) {  
+  var diff= (new Date().getTime() - startTime) / 1000;
+  console.log('Total Feching Time (sec.) :- ' + diff);
+  console.log('Avg Fech Time (sec.) :- '+ diff/businessInfo.length);
+
+  var hiddenElement = document.createElement("a");
+  hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(elem);
+  hiddenElement.target = "_blank";
+  hiddenElement.download = "business directory JSON - googleMap.txt";
+  hiddenElement.click();
+}
+
+
+  
