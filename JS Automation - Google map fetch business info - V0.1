@@ -7,12 +7,30 @@
 // formate Raw JSON text >> https://webformatter.com/json
 
 
+var node = document.createElement("div");
+  node.innerHTML = `<div style="display: flex; position: fixed; top: 80px; right: 20px; z-index: 999;">
+  <div id="fetchDataCount" style="color: white;font-size:20px; font-family:roboto; padding:16px 20px; background:#3b4e50;cursor:pointer; display:inline-
+
+block;"> 00  </div>
+  <div onclick="createCSV2(JSON.stringify(businessInfo));" style="color: white;font-size:20px; font-family:roboto; padding:12px 20px; 
+
+background:#00bcd4;cursor:pointer; display:inline-block;">Donload CSV <svg style="margin: 0 4px" xmlns="http://www.w3.org/2000/svg" width="24" 
+
+height="24" style="vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-
+
+linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg></div>  
+</div>`;
+  document.body.appendChild(node);
+
+
 var waitLoad, waitInfoUpdate, curFetch, countB = 0, countPg = 0;
 var businessInfo = [];
 var srchList;
 var timeWait, curVed;
 
-var fetchSpeed = 1000; // 1000ms or 1 sec.
+var fetchCount = 0;
+
+var fetchSpeed = 1000;  // 1000ms or 1 sec.
 
 getListAll();
 
@@ -39,6 +57,17 @@ function getListAll(){
 
 
 
+function confPageItem(){
+  var srchItmTitle = document.querySelectorAll('.uMdZh.tIxNaf.mnr-c.rllt__local-item-selected a [role="heading"]')[0];
+  var infoBoxTitle = document.querySelectorAll('.immersive-container [data-attrid=title]')[0];
+  if(srchItmTitle  && infoBoxTitle ){
+    if(srchItmTitle.innerText ==  infoBoxTitle .innerText) return true;
+  }else{
+    return false;
+  }
+}
+
+
 function getInfo(){
   clearInterval(timeWait);  
   var infoBox = document.querySelectorAll('.immersive-container')[0];
@@ -53,6 +82,12 @@ function getInfo(){
       curFetch = infoBox.querySelectorAll('[data-attrid]');
       waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
   }, false);  
+
+  if(confPageItem() && countB == 0){
+    clearInterval(waitInfoUpdate);    
+    curFetch = infoBox.querySelectorAll('[data-attrid]');
+    waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
+  }
   
 }
 
@@ -71,14 +106,15 @@ function fetchInfo(){
     url:  'notSet',
   }
 
+  var ctrDup = false;
+
   curFetch.forEach(function(atrItem){
     if(atrItem.dataset.attrid.search('title') > -1 ){
       resp.title = atrItem.innerText;
       resp.ved = atrItem.dataset.ved;
-      if(businessInfo.linkList > 0){
+      if(businessInfo.length > 0){
         if(businessInfo[(businessInfo.length - 1)].ved == resp.ved){
-          waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
-          return;
+          ctrDup = true;          
         }
       }      
     } 
@@ -96,17 +132,27 @@ function fetchInfo(){
   
   
 
+  if(ctrDup){
+    curFetch = document.querySelectorAll('.immersive-container')[0].querySelectorAll('[data-attrid]');
+    waitInfoUpdate  = setInterval(fetchInfo, 100);
+    return;
+  }
+
   businessInfo.push(resp);
 
   
   if((countB + 1) < srchList.length){
     countB++;
     console.log('Page: ' + countPg + ' ->> Item: ' + (countB));
+    fetchCount++;
+    document.getElementById('fetchDataCount').innerHTML = fetchCount;
     srchList[countB].click();
     timeWait = setInterval(getInfo, 100);
     
   }else{
     console.log('Page: ' + countPg + ' ->> Item: ' + (countB + 1));
+    fetchCount++;
+    document.getElementById('fetchDataCount').innerHTML = fetchCount;
     console.log('Page Next');
     moveToNextPg();
   }     
@@ -171,5 +217,3 @@ function createCSV2(elem) {
   hiddenElement.click();
 }
 
-
-  
