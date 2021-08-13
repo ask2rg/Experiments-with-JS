@@ -1,0 +1,11 @@
+
+function createUniqueID() {
+  let d = new Date().getTime();
+  let ut = d.toString(36).split('');
+  let rpt = Math.floor((Math.random() * 100) + 1) % ut.length;
+  for(let i = 0; i<rpt; i++){
+  let rp = Math.floor((Math.random() * 100) + 1) % ut.length;
+    ut[rp] = ut[rp].toUpperCase();
+  }
+  return ut.join("");
+}
