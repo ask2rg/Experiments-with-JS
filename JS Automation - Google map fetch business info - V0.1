@@ -7,213 +7,156 @@
 // formate Raw JSON text >> https://webformatter.com/json
 
 
+window.onbeforeunload = function () {
+    return "Do you really want to stop this script ?";
+};
+
 var node = document.createElement("div");
-  node.innerHTML = `<div style="display: flex; position: fixed; top: 80px; right: 20px; z-index: 999;">
-  <div id="fetchDataCount" style="color: white;font-size:20px; font-family:roboto; padding:16px 20px; background:#3b4e50;cursor:pointer; display:inline-
-
-block;"> 00  </div>
-  <div onclick="createCSV2(JSON.stringify(businessInfo));" style="color: white;font-size:20px; font-family:roboto; padding:12px 20px; 
-
-background:#00bcd4;cursor:pointer; display:inline-block;">Donload CSV <svg style="margin: 0 4px" xmlns="http://www.w3.org/2000/svg" width="24" 
-
-height="24" style="vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-
-
-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg></div>  
-</div>`;
-  document.body.appendChild(node);
-
-
-var waitLoad, waitInfoUpdate, curFetch, countB = 0, countPg = 0;
+node.innerHTML = `<div style="display: flex; position: fixed; top: 80px; right: 20px; z-index: 999;"> <div id="fetchDataCount" style="color: white;font-size:20px; font-family:roboto; padding:16px 20px; background:#3b4e50;cursor:pointer; display:inline- block;"> 00  </div> <div onclick="createCSV2(JSON.stringify(businessInfo));" style="color: white;font-size:20px; font-family:roboto; padding:12px 20px; background:#00bcd4;cursor:pointer; display:inline-block;">Donload CSV <svg style="margin: 0 4px" xmlns="http://www.w3.org/2000/svg" width="24" height="24" style="vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke- linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg></div> </div>`;
+document.body.appendChild(node);
+var waitLoad,
+    waitInfoUpdate,
+    curFetch,
+    countB = 0,
+    countPg = 0;
 var businessInfo = [];
 var srchList;
 var timeWait, curVed;
-
 var fetchCount = 0;
-
-var fetchSpeed = 1000;  // 1000ms or 1 sec.
-
+var fetchSpeed = 1000;
 getListAll();
-
 var startTime;
-
-function getListAll(){
-  startTime = new Date().getTime();
-
-  if(document.querySelectorAll('.rlfl__loading-overlay.rlfl__visible')[0]){
-
-  }else{
-    clearInterval(waitLoad);
-    countPg++;
-
-    srchList = document.querySelectorAll('.VkpGBb > a');
- 
-    countB = 0;
-    srchList[0].click();    
-    curFetch = 'none';
-    timeWait = setInterval(getInfo, fetchSpeed);
-  }
-
+function getListAll() {
+    startTime = new Date().getTime();
+    if (document.querySelectorAll(".rlfl__loading-overlay.rlfl__visible")[0]) {
+    } else {
+        clearInterval(waitLoad);
+        countPg++;
+        srchList = document.querySelectorAll(".VkpGBb > a.rllt__link:not([href]");
+        countB = 0;
+        srchList[0].click();
+        curFetch = "none";
+        timeWait = setInterval(getInfo, fetchSpeed);
+    }
 }
-
-
-
-function confPageItem(){
-  var srchItmTitle = document.querySelectorAll('.uMdZh.tIxNaf.mnr-c.rllt__local-item-selected a [role="heading"]')[0];
-  var infoBoxTitle = document.querySelectorAll('.immersive-container [data-attrid=title]')[0];
-  if(srchItmTitle  && infoBoxTitle ){
-    if(srchItmTitle.innerText ==  infoBoxTitle .innerText) return true;
-  }else{
-    return false;
-  }
+function confPageItem() {
+    var srchItmTitle = document.querySelectorAll('.uMdZh.tIxNaf.mnr-c.rllt__local-item-selected a [role="heading"]')[0];
+    var infoBoxTitle = document.querySelectorAll(".immersive-container [data-attrid=title]")[0];
+    if (srchItmTitle && infoBoxTitle) {
+        if (srchItmTitle.innerText == infoBoxTitle.innerText) return true;
+    } else {
+        return false;
+    }
 }
-
-
-function getInfo(){
-  clearInterval(timeWait);  
-  var infoBox = document.querySelectorAll('.immersive-container')[0];
-
-  if(!infoBox){
-    srchList[countB].click();
-    timeWait = setInterval(getInfo, fetchSpeed);        
-  }
-  
-  infoBox.addEventListener('DOMSubtreeModified', function () {
-      clearInterval(waitInfoUpdate);    
-      curFetch = infoBox.querySelectorAll('[data-attrid]');
-      waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
-  }, false);  
-
-  if(confPageItem() && countB == 0){
-    clearInterval(waitInfoUpdate);    
-    curFetch = infoBox.querySelectorAll('[data-attrid]');
-    waitInfoUpdate  = setInterval(fetchInfo, fetchSpeed);
-  }
-  
+function getInfo() {
+    clearInterval(timeWait);
+    var infoBox = document.querySelectorAll(".immersive-container")[0];
+    if (!infoBox) {
+        srchList[countB].click();
+        timeWait = setInterval(getInfo, fetchSpeed);
+    }
+    infoBox.addEventListener(
+        "DOMSubtreeModified",
+        function () {
+            clearInterval(waitInfoUpdate);
+            curFetch = infoBox.querySelectorAll("[data-attrid]");
+            waitInfoUpdate = setInterval(fetchInfo, fetchSpeed);
+        },
+        false
+    );
+    if (confPageItem() && countB == 0) {
+        clearInterval(waitInfoUpdate);
+        curFetch = infoBox.querySelectorAll("[data-attrid]");
+        waitInfoUpdate = setInterval(fetchInfo, fetchSpeed);
+    }
 }
-
-
-
-function fetchInfo(){
-  clearInterval(waitInfoUpdate); 
-  
-  var resp = {
-    title: 'notSet',
-    address: 'notSet',
-    phone: 'notSet',
-    website: 'notSet',
-    closed: 'no',
-    ved: 'notSet',
-    url:  'notSet',
-  }
-
-  var ctrDup = false;
-
-  curFetch.forEach(function(atrItem){
-    if(atrItem.dataset.attrid.search('title') > -1 ){
-      resp.title = atrItem.innerText;
-      resp.ved = atrItem.dataset.ved;
-      if(businessInfo.length > 0){
-        if(businessInfo[(businessInfo.length - 1)].ved == resp.ved){
-          ctrDup = true;          
+function fetchInfo() {
+    clearInterval(waitInfoUpdate);
+    var resp = { title: "notSet", address: "notSet", phone: "notSet", website: "notSet", closed: "no", ved: "notSet", url: "notSet" };
+    var ctrDup = false;
+    curFetch.forEach(function (atrItem) {
+        if (atrItem.dataset.attrid.search("title") > -1) {
+            resp.title = atrItem.innerText;
+            resp.ved = atrItem.dataset.ved;
+            if (businessInfo.length > 0) {
+                if (businessInfo[businessInfo.length - 1].ved == resp.ved) {
+                    ctrDup = true;
+                }
+            }
         }
-      }      
-    } 
-    if(atrItem.dataset.attrid.search('address') > -1 ) resp.address = atrItem.innerText;
-    if(atrItem.dataset.attrid.search('phone') > -1 ) resp.phone = atrItem.innerText;  
-    if(atrItem.dataset.attrid.search('closed') > -1 ) resp.closed = 'yes'; 
-    resp.url = document.querySelectorAll('.uMdZh.tIxNaf.mnr-c.rllt__local-item-selected a')[0].href;
-
-    var actBtn = document.querySelectorAll('.immersive-container .IzNS7c.duf-h .QqG1Sd');
-    actBtn.forEach(function(btn){
-      if(btn.innerText.toLowerCase().search('website') > -1) resp.website = btn.querySelectorAll('a')[0].href;
+        if (atrItem.dataset.attrid.search("address") > -1) resp.address = atrItem.innerText;
+        if (atrItem.dataset.attrid.search("phone") > -1) resp.phone = atrItem.innerText;
+        if (atrItem.dataset.attrid.search("closed") > -1) resp.closed = "yes";
+        resp.url = document.querySelectorAll(".uMdZh.tIxNaf.mnr-c.rllt__local-item-selected a")[0].href;
+        var actBtn = document.querySelectorAll(".immersive-container .IzNS7c.duf-h .QqG1Sd");
+        actBtn.forEach(function (btn) {
+            if (btn.innerText.toLowerCase().search("website") > -1) resp.website = btn.querySelectorAll("a")[0].href;
+        });
     });
-
-  });
-  
-  
-
-  if(ctrDup){
-    curFetch = document.querySelectorAll('.immersive-container')[0].querySelectorAll('[data-attrid]');
-    waitInfoUpdate  = setInterval(fetchInfo, 100);
-    return;
-  }
-
-  businessInfo.push(resp);
-
-  
-  if((countB + 1) < srchList.length){
-    countB++;
-    console.log('Page: ' + countPg + ' ->> Item: ' + (countB));
-    fetchCount++;
-    document.getElementById('fetchDataCount').innerHTML = fetchCount;
-    srchList[countB].click();
-    timeWait = setInterval(getInfo, 100);
-    
-  }else{
-    console.log('Page: ' + countPg + ' ->> Item: ' + (countB + 1));
-    fetchCount++;
-    document.getElementById('fetchDataCount').innerHTML = fetchCount;
-    console.log('Page Next');
-    moveToNextPg();
-  }     
+    if (ctrDup) {
+        curFetch = document.querySelectorAll(".immersive-container")[0].querySelectorAll("[data-attrid]");
+        waitInfoUpdate = setInterval(fetchInfo, 100);
+        return;
+    }
+    businessInfo.push(resp);
+    if (countB + 1 < srchList.length) {
+        countB++;
+        console.log("Page: " + countPg + " ->> Item: " + countB);
+        fetchCount++;
+        document.getElementById("fetchDataCount").innerHTML = fetchCount;
+        // console.log(srchList[countB]); //log err
+        srchList[countB].click();
+        timeWait = setInterval(getInfo, 100);
+    } else {
+        console.log("Page: " + countPg + " ->> Item: " + (countB + 1));
+        fetchCount++;
+        document.getElementById("fetchDataCount").innerHTML = fetchCount;
+        console.log("Page Next");
+        moveToNextPg();
+    }
 }
-
-
-var nextWait, runWait = false, waitPg; 
-
-function moveToNextPg(){
-  var nextPg = document.querySelectorAll('#pnnext')[0];
-  if(nextPg){  
-    nextPg.click();
-    nextWait = true;  
-    waitPg = setInterval(waitToLoadPage, fetchSpeed);  
-  }else{  
-    console.log('Finished Process. Wait for CSV...');    
-    createCSV2(JSON.stringify(businessInfo));   
-  } 
+var nextWait,
+    runWait = false,
+    waitPg;
+function moveToNextPg() {
+    var nextPg = document.querySelectorAll("#pnnext")[0];
+    if (nextPg) {
+        nextPg.click();
+        nextWait = true;
+        waitPg = setInterval(waitToLoadPage, fetchSpeed);
+    } else {
+        console.log("Finished Process. Wait for CSV...");
+        createCSV2(JSON.stringify(businessInfo));
+    }
 }
-
-
-
-function waitToLoadPage(){
-  
-  if(document.querySelectorAll('.rlfl__loading-overlay.rlfl__visible')[0]){
-    if(nextWait) runWait = true;
-    console.log('load next page');
-  }else if(runWait){
-    clearInterval(waitPg); 
-    runWait = false;
-    nextWait = false;
-    console.log('ready next page');
-
-    countPg++;
-    srchList = document.querySelectorAll('.VkpGBb > a');
-    
-
-    countB = 0;
-    srchList[0].click();    
-    curFetch = 'none';
-    timeWait = setInterval(getInfo, fetchSpeed);
-  }else{
-    runWait = true;
-    console.log('#Err next page');
-  }
+function waitToLoadPage() {
+    if (document.querySelectorAll(".rlfl__loading-overlay.rlfl__visible")[0]) {
+        if (nextWait) runWait = true;
+        console.log("load next page");
+    } else if (runWait) {
+        clearInterval(waitPg);
+        runWait = false;
+        nextWait = false;
+        console.log("ready next page");
+        countPg++;
+        srchList = document.querySelectorAll(".VkpGBb > a.rllt__link:not([href]");
+        countB = 0;
+        srchList[0].click();
+        curFetch = "none";
+        timeWait = setInterval(getInfo, fetchSpeed);
+    } else {
+        runWait = true;
+        console.log("#Err next page");
+    }
 }
-
-
-
-
-
-
-function createCSV2(elem) {  
-  var diff= (new Date().getTime() - startTime) / 1000;
-  console.log('Total Feching Time (sec.) :- ' + diff);
-  console.log('Avg Fech Time (sec.) :- '+ diff/businessInfo.length);
-
-  var hiddenElement = document.createElement("a");
-  hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(elem);
-  hiddenElement.target = "_blank";
-  hiddenElement.download = "business directory JSON - googleMap.txt";
-  hiddenElement.click();
+function createCSV2(elem) {
+    var diff = (new Date().getTime() - startTime) / 1000;
+    console.log("Total Feching Time (sec.) :- " + diff);
+    console.log("Avg Fech Time (sec.) :- " + diff / businessInfo.length);
+    var hiddenElement = document.createElement("a");
+    hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(elem);
+    hiddenElement.target = "_blank";
+    hiddenElement.download = "business directory JSON - googleMap.txt";
+    hiddenElement.click();
 }
 
